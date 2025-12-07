@@ -33,8 +33,10 @@ function App() {
     setTask(null);
     setTaskId(null);
 
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
     try {
-      const response = await axios.post('http://localhost:3000/api/tasks', {
+      const response = await axios.post(`${apiUrl}/api/tasks`, {
         url,
         question,
       });
@@ -51,8 +53,9 @@ function App() {
     if (!taskId) return;
 
     const poll = async () => {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       try {
-        const response = await axios.get(`http://localhost:3000/api/tasks/${taskId}`);
+        const response = await axios.get(`${apiUrl}/api/tasks/${taskId}`);
         setTask(response.data);
 
         if (response.data.status === 'completed' || response.data.status === 'error') {
