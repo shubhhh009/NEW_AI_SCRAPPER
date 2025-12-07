@@ -75,10 +75,9 @@ app.post('/api/tasks', async (req, res) => {
             // We need to import processTask from worker.ts
             const { processTask } = require('./worker');
 
-            // Process in background (don't await)
-            processTask(newTask.id, url, question).catch((err: any) => {
-                console.error('Direct processing error:', err);
-            });
+            // Process synchronously for serverless (Vercel) to prevent freezing
+            // We await here so the execution context stays alive
+            await processTask(newTask.id, url, question);
         }
 
         res.json(newTask);
