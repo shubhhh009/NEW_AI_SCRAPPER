@@ -16,7 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@huggingface/inference": "^4.13.4",
-    "@sparticuz/chromium": "^141.0.0",
+    "@sparticuz/chromium": "^123.0.0",
     "bullmq": "^5.4.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.1",
@@ -26,7 +26,7 @@
     "openai": "^4.28.0",
     "pg": "^8.11.3",
     "puppeteer": "^22.0.0",
-    "puppeteer-core": "^24.31.0"
+    "puppeteer-core": "^22.6.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
