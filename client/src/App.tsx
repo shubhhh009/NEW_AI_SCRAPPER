@@ -33,7 +33,7 @@ function App() {
     setTask(null);
     setTaskId(null);
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
     try {
       const response = await axios.post(`${apiUrl}/api/tasks`, {
@@ -56,7 +56,7 @@ function App() {
     if (!taskId || task?.status === 'completed' || task?.status === 'error') return;
 
     const poll = async () => {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
       try {
         const response = await axios.get(`${apiUrl}/api/tasks/${taskId}`);
         // Only update if status changed to avoid unnecessary re-renders/checks
