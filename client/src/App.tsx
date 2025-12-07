@@ -43,29 +43,33 @@ function App() {
       setTaskId(response.data.id);
       setTask(response.data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to submit task');
+      setError(err.response?.data?.error || err.response?.data?.details || err.message || 'Failed to submit task');
+      if (!err.response) {
+        setError('Network Error: Cannot connect to server. Is it running?');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!taskId) return;
+    if (!taskId || task?.status === 'completed' || task?.status === 'error') return;
 
     const poll = async () => {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       try {
         const response = await axios.get(`${apiUrl}/api/tasks/${taskId}`);
-        setTask(response.data);
-
-        if (response.data.status === 'completed' || response.data.status === 'error') {
-          // Stop polling
-          return;
+        // Only update if status changed to avoid unnecessary re-renders/checks
+        if (response.data.status !== task?.status) {
+          setTask(response.data);
         }
       } catch (err) {
         console.error('Polling error', err);
       }
     };
+
+    // Initial poll immediately
+    poll();
 
     const interval = setInterval(poll, 5000);
     return () => clearInterval(interval);

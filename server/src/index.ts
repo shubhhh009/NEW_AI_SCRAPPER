@@ -12,6 +12,14 @@ import './worker'; // Start worker
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+    next();
+});
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 const port = process.env.PORT || 3000;
 
@@ -74,9 +82,13 @@ app.post('/api/tasks', async (req, res) => {
         }
 
         res.json(newTask);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error: any) {
+        console.error('Error processing task submission:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            details: error instanceof Error ? error.message : 'Unknown error',
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
@@ -105,5 +117,6 @@ export default app;
 if (require.main === module) {
     app.listen(port, () => {
         console.log(`Server running on port ${port}`);
+        console.log(`Health check available at http://localhost:${port}/health`);
     });
 }
