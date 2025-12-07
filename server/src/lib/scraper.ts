@@ -27,8 +27,19 @@ export async function scrapeUrl(url: string): Promise<string> {
 
         const page = await browser.newPage();
 
-        // Wait for network to be idle (better for SPAs)
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+        // Optimize performance by blocking resources
+        await page.setRequestInterception(true);
+        page.on('request', (req) => {
+            const resourceType = req.resourceType();
+            if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
+
+        // Wait for DOM content only (faster than networkidle2)
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
         // Extract structured content
         const data = await (page.evaluate as any)(() => {
