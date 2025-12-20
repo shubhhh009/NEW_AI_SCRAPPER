@@ -11,17 +11,19 @@ export async function scrapeUrl(url: string): Promise<string> {
 
         if (isProduction) {
             // Configure for Vercel/Serverless
-            browser = await puppeteerCore.launch({
-                args: (chromium as any).args,
+            const options: any = {
+                args: [...(chromium as any).args, '--hide-scrollbars', '--disable-web-security'],
                 defaultViewport: (chromium as any).defaultViewport,
                 executablePath: await (chromium as any).executablePath(),
                 headless: (chromium as any).headless,
-            });
+                ignoreHTTPSErrors: true,
+            };
+            browser = await puppeteerCore.launch(options);
         } else {
             // Local development
             browser = await puppeteer.launch({
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
             });
         }
 
