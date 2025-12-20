@@ -1,4 +1,3 @@
-import puppeteer from 'puppeteer';
 import chromium from '@sparticuz/chromium';
 import puppeteerCore from 'puppeteer-core';
 
@@ -6,24 +5,25 @@ export async function scrapeUrl(url: string): Promise<string> {
     let browser;
 
     try {
-        // Check if running on Vercel/AWS Lambda
         const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
         if (isProduction) {
-            // Configure for Vercel/Serverless
-            const options: any = {
-                args: [...(chromium as any).args, '--hide-scrollbars', '--disable-web-security'],
+            browser = await puppeteerCore.launch({
+                args: (chromium as any).args,
                 defaultViewport: (chromium as any).defaultViewport,
                 executablePath: await (chromium as any).executablePath(),
                 headless: (chromium as any).headless,
-                ignoreHTTPSErrors: true,
-            };
-            browser = await puppeteerCore.launch(options);
+            } as any);
         } else {
-            // Local development
-            browser = await puppeteer.launch({
-                headless: true,
+            // Local development fallback
+            browser = await puppeteerCore.launch({
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+                headless: true,
+                executablePath: process.platform === 'win32'
+                    ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+                    : process.platform === 'darwin'
+                        ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+                        : '/usr/bin/google-chrome',
             });
         }
 
