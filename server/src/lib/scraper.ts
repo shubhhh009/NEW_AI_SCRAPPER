@@ -1,5 +1,5 @@
 import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
+import { chromium as playwright, Route } from 'playwright-core';
 
 export async function scrapeUrl(url: string): Promise<string> {
     let browser;
@@ -8,14 +8,14 @@ export async function scrapeUrl(url: string): Promise<string> {
         const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
         if (isProduction) {
-            browser = await puppeteer.launch({
+            browser = await playwright.launch({
                 args: (chromium as any).args,
                 executablePath: await (chromium as any).executablePath(),
                 headless: (chromium as any).headless,
             });
         } else {
             // Local development fallback
-            browser = await puppeteer.launch({
+            browser = await playwright.launch({
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
                 headless: true,
                 executablePath: process.platform === 'win32'
@@ -26,24 +26,17 @@ export async function scrapeUrl(url: string): Promise<string> {
             });
         }
 
-        const page = await browser.newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
 
-        // Optimize performance by blocking resources
-        await page.setRequestInterception(true);
-        page.on('request', (req) => {
-            const resourceType = req.resourceType();
-            if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
-                req.abort();
-            } else {
-                req.continue();
-            }
-        });
+        // Optimize performance by blocking resources in Playwright
+        await page.route('**/*.{png,jpg,jpeg,gif,svg,css,font,woff,woff2}', (route: Route) => route.abort());
 
-        // Wait for DOM content only (faster than networkidle2)
+        // Navigation in Playwright
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
         // Extract structured content
-        const data = await (page.evaluate as any)(() => {
+        const data = await page.evaluate(() => {
             const title = document.title;
             const metaDescription = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
             const bodyText = document.body.innerText;
@@ -54,13 +47,11 @@ export async function scrapeUrl(url: string): Promise<string> {
             return `Title: ${title}\nDescription: ${metaDescription}\n\nContent:\n${cleanBody}`;
         });
 
-        return data as string;
+        await browser.close();
+        return data;
     } catch (error) {
         console.error('Error scraping URL:', error);
+        if (browser) await browser.close();
         throw error;
-    } finally {
-        if (browser) {
-            await browser.close();
-        }
     }
 }
