@@ -1,5 +1,5 @@
 import chromium from '@sparticuz/chromium';
-import puppeteerCore from 'puppeteer-core';
+import puppeteer from 'puppeteer-core';
 
 export async function scrapeUrl(url: string): Promise<string> {
     let browser;
@@ -8,15 +8,14 @@ export async function scrapeUrl(url: string): Promise<string> {
         const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
         if (isProduction) {
-            browser = await puppeteerCore.launch({
+            browser = await puppeteer.launch({
                 args: (chromium as any).args,
-                defaultViewport: (chromium as any).defaultViewport,
                 executablePath: await (chromium as any).executablePath(),
                 headless: (chromium as any).headless,
-            } as any);
+            });
         } else {
             // Local development fallback
-            browser = await puppeteerCore.launch({
+            browser = await puppeteer.launch({
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
                 headless: true,
                 executablePath: process.platform === 'win32'
