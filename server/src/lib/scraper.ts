@@ -13,13 +13,26 @@ export async function scrapeUrl(url: string): Promise<string> {
                 executablePath: await (chromium as any).executablePath(
                     'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
                 ),
-                headless: (chromium as any).headless,
+                headless: true,
             });
         } else {
-            // Local development
+            // Local development - Try to find system Chrome if Playwright browser is missing
+            const localPath = process.platform === 'win32'
+                ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+                : process.platform === 'darwin'
+                    ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+                    : '/usr/bin/google-chrome';
+
             browser = await playwright.launch({
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
                 headless: true,
+                executablePath: localPath,
+            }).catch(async (e) => {
+                console.log('System Chrome not found, trying default Playwright launch...');
+                return await playwright.launch({
+                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+                    headless: true,
+                });
             });
         }
 
