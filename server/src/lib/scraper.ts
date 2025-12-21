@@ -5,30 +5,24 @@ export async function scrapeUrl(url: string): Promise<string> {
     let browser;
 
     try {
-        const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+        console.log(`[Scraper] Environment: ${isProduction ? 'Production' : 'Development'}`);
 
         if (isProduction) {
             browser = await playwright.launch({
-                args: (chromium as any).args,
-                executablePath: await (chromium as any).executablePath(
+                args: chromium.args,
+                executablePath: await chromium.executablePath(
                     'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
                 ),
                 headless: true,
             });
         } else {
-            // Local development - Try to find system Chrome if Playwright browser is missing
-            const localPath = process.platform === 'win32'
-                ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-                : process.platform === 'darwin'
-                    ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-                    : '/usr/bin/google-chrome';
-
+            console.log('[Scraper] Using local developmental launch');
             browser = await playwright.launch({
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
                 headless: true,
-                executablePath: localPath,
             }).catch(async (e) => {
-                console.log('System Chrome not found, trying default Playwright launch...');
+                console.log('[Scraper] Local launch failed, trying fallback...');
                 return await playwright.launch({
                     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
                     headless: true,
